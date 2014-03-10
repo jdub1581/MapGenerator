@@ -225,8 +225,6 @@ public class MainWindow2 extends AnchorPane implements Initializable {
             if(file != null){
                 FXMLExporter exp = new FXMLExporter(new FileOutputStream(file));
                 exp.export(meshView);
-                
-                progressLabel.setText("Export Successful !");
             }
         }
     }
