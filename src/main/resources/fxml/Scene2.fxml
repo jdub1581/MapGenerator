@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import org.jtp.heightmapgenerator.*?>
+
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="738.0" prefWidth="1111.0" style="-fx-background-color: rgba(0,0,0,0.85);" type="AnchorPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<children>
+<StackPane fx:id="subScenePane" layoutX="14.0" layoutY="52.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="225.0" AnchorPane.topAnchor="50.0">
+<children><SubScene fx:id="subScene" fill="#696666" height="670.0" layoutX="14.0" layoutY="52.0" width="871.0">
+  <root>
+    <Group />
+  </root>
+</SubScene><VBox id="controller" fx:id="navControl" alignment="CENTER" layoutX="825.0" layoutY="60.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="10.0" style="-fx-background-color: rgba(0,0,0,0.35); -fx-background-radius: 25;" stylesheets="@../styles/viewer.css" StackPane.alignment="TOP_RIGHT">
+  <children>
+    <FourWayNavControl fx:id="eyeNav" />
+    <FourWayNavControl fx:id="camNav" />
+    <ScrollBar fx:id="zoomBar" orientation="VERTICAL" rotate="180.0" />
+  </children>
+  <padding>
+    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+  </padding>
+<effect>
+<InnerShadow color="#e8e8e8">
+<input>
+<DropShadow color="#222222" spread="0.17" />
+</input>
+</InnerShadow>
+</effect>
+<StackPane.margin>
+<Insets right="10.0" top="10.0" />
+</StackPane.margin>
+</VBox>
+</children>
+<effect>
+<DropShadow />
+</effect>
+</StackPane>
+<VBox fx:id="meshButtons" layoutX="899.0" layoutY="666.0" spacing="7.0" AnchorPane.bottomAnchor="16.0" AnchorPane.rightAnchor="10.0">
+<children><Button fx:id="generateMeshButton" layoutX="899.0" layoutY="666.0" mnemonicParsing="false" onAction="#generateMesh" prefHeight="18.0" prefWidth="202.0" text="Generate Mesh" />
+<Button fx:id="exportAsFXMLButton" layoutX="899.0" layoutY="699.0" mnemonicParsing="false" onAction="#exportAsFXML" prefHeight="18.0" prefWidth="202.0" text="Export as FXML" />
+</children>
+</VBox>
+<VBox fx:id="editor" layoutX="890.0" layoutY="50.0" spacing="20.0" AnchorPane.rightAnchor="12.0" AnchorPane.topAnchor="55.0">
+<children>
+<VBox fx:id="meshAttributes" layoutX="893.0" layoutY="50.0">
+<children>
+<VBox fx:id="pixelSkip" layoutX="899.0" layoutY="50.0">
+<children><Label fx:id="pixelSkipValueLabel" alignment="CENTER" layoutX="899.0" layoutY="50.0" prefHeight="17.0" prefWidth="202.0" text="Pixel Skip : " textFill="#e8e5e5">
+<font>
+<Font name="System Bold" size="12.0" />
+</font></Label><Slider fx:id="pixelSkipSlider" blockIncrement="3.0" layoutX="899.0" layoutY="65.0" min="2.0" prefHeight="14.0" prefWidth="202.0" value="5.0" />
+</children>
+</VBox>
+<VBox fx:id="height" layoutX="896.0" layoutY="90.0">
+<children>
+<Label fx:id="maxHeightValueLabel" alignment="CENTER" layoutX="899.0" layoutY="90.0" prefHeight="17.0" prefWidth="202.0" text="Max Height :" textFill="#e8e5e5">
+<font>
+<Font name="System Bold" size="12.0" />
+</font>
+</Label>
+<Slider fx:id="maxHeightSlider" blockIncrement="0.5" layoutX="899.0" layoutY="107.0" max="5.0" min="0.01" prefHeight="14.0" prefWidth="202.0" />
+</children>
+</VBox>
+<VBox fx:id="scale" layoutX="896.0" layoutY="131.0">
+<children>
+<Label fx:id="scaleValueLabel" alignment="CENTER" layoutX="899.0" layoutY="131.0" prefHeight="17.0" prefWidth="202.0" text="Scale : " textFill="#e8e5e5">
+<font>
+<Font name="System Bold" size="12.0" />
+</font>
+</Label>
+<Slider fx:id="scaleSlider" blockIncrement="0.05" layoutX="899.0" layoutY="148.0" max="2.0" min="0.01" prefHeight="14.0" prefWidth="202.0" />
+</children>
+</VBox>
+</children>
+</VBox>
+<VBox fx:id="meshImaging" layoutX="899.0" layoutY="184.0" spacing="10.0">
+<children><ImageView fx:id="meshImageView" fitHeight="150.0" fitWidth="202.0" layoutX="899.0" layoutY="188.0" pickOnBounds="true">
+<effect>
+<DropShadow color="WHITE" />
+</effect>
+<image>
+<Image url="@../../../../../../../../Public/Pictures/Sample%20Pictures/Chrysanthemum.jpg" />
+</image></ImageView>
+<VBox layoutX="893.0" layoutY="345.0" spacing="5.0">
+<children><CheckBox fx:id="convertImage" layoutX="893.0" layoutY="345.0" mnemonicParsing="false" onAction="#convertImageToGrayScale" prefHeight="17.0" prefWidth="202.0" text="Convert Image to GrayScale" textFill="#d7d7d7" />
+<CheckBox fx:id="useForMaterial" layoutX="893.0" layoutY="369.0" mnemonicParsing="false" onAction="#useImageForMaterial" prefHeight="17.0" prefWidth="202.0" text="Use Image for Material" textFill="#d7d7d7" />
+</children>
+</VBox>
+</children>
+</VBox>
+<HBox fx:id="materialColors" alignment="CENTER" layoutX="897.3759765625" layoutY="369.0" spacing="25.0">
+<children>
+<VBox alignment="CENTER" layoutX="897.3759765625" layoutY="369.0" spacing="5.0">
+<children><Label layoutX="897.380859375" layoutY="369.0" text="Diffuse Color" textFill="#bfbfbf" /><ColorPicker fx:id="diffColorPicker" layoutX="897.3759765625" layoutY="389.0" />
+</children>
+</VBox>
+<VBox alignment="CENTER" layoutX="998.0" layoutY="369.0" spacing="5.0">
+<children>
+<Label layoutX="897.380859375" layoutY="369.0" text="Specular Color" textFill="#bfbfbf" />
+<ColorPicker fx:id="specColorPicker" layoutX="897.3759765625" layoutY="389.0" />
+</children>
+</VBox>
+</children>
+</HBox><ComboBox fx:id="cullFaceChooser" onAction="#setCullFace" prefHeight="25.0" prefWidth="202.0" promptText="Cull Face" />
+<VBox alignment="CENTER" layoutX="897.0" layoutY="494.0" spacing="5.0">
+<children>
+<HBox layoutX="897.0" layoutY="494.0" maxHeight="-Infinity" maxWidth="-Infinity" spacing="25.0">
+<children>
+<VBox alignment="CENTER" layoutX="897.0" layoutY="494.0" spacing="5.0">
+<children>
+<Label layoutX="955.880859375" layoutY="568.5" text="Head Light" textFill="#bcbcbc" />
+<ColorPicker fx:id="headColorPicker" layoutX="955.8759765625" layoutY="594.5" />
+</children>
+</VBox>
+<VBox alignment="CENTER" layoutX="1000.0" layoutY="494.0" spacing="5.0">
+<children>
+<Label layoutX="955.880859375" layoutY="568.5" text="Ambient Light" textFill="#bcbcbc" />
+<ColorPicker fx:id="ambientColorPicker" layoutX="955.8759765625" layoutY="594.5" />
+</children>
+</VBox>
+</children>
+</HBox>
+<VBox alignment="CENTER" layoutX="897.0" layoutY="557.0" spacing="5.0">
+<children><Label layoutX="955.880859375" layoutY="568.5" text="Point Light" textFill="#bcbcbc" /><ColorPicker fx:id="pointColorPicker" layoutX="955.8759765625" layoutY="594.5" />
+</children>
+</VBox>
+</children>
+</VBox>
+</children>
+</VBox>
+<VBox fx:id="header" alignment="CENTER_RIGHT" layoutX="13.0" layoutY="6.0" spacing="5.0" AnchorPane.leftAnchor="12.0" AnchorPane.rightAnchor="225.0" AnchorPane.topAnchor="5.0">
+<children>
+<HBox alignment="CENTER" layoutX="13.0" layoutY="6.0" maxHeight="-Infinity" maxWidth="-Infinity" spacing="10.0">
+<children><CheckBox fx:id="wireFrameOn" layoutX="14.2890625" layoutY="20.5" mnemonicParsing="false" onAction="#setWireFrame" text="WireFrame" textFill="#dadada" />
+<CheckBox fx:id="axesOn" layoutX="98.0" layoutY="21.0" mnemonicParsing="false" onAction="#showAxes" selected="true" text="Show Axes" textFill="#dadada" />
+<CheckBox fx:id="headLightOn" layoutX="184.0" layoutY="21.0" mnemonicParsing="false" onAction="#headLightOn" text="HeadLight" textFill="#dadada" />
+<CheckBox fx:id="ambientLightOn" layoutX="271.0" layoutY="21.0" mnemonicParsing="false" onAction="#ambientLightOn" selected="true" text="AmbientLight" textFill="#dadada" />
+<CheckBox fx:id="pointLightOn" layoutX="375.0" layoutY="21.0" mnemonicParsing="false" onAction="#pointLightOn" selected="true" text="PointLight" textFill="#dadada" />
+</children>
+<VBox.margin>
+<Insets right="10.0" />
+</VBox.margin>
+</HBox>
+<VBox layoutX="13.0" layoutY="28.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+<children><Label fx:id="progressLabel" alignment="CENTER" layoutX="13.0" layoutY="23.0" prefHeight="17.0" prefWidth="871.0" textFill="#d3d3d3" /><ProgressBar fx:id="progressBar" layoutX="13.0" layoutY="45.0" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="5.0" prefWidth="871.0" progress="0.0" HBox.hgrow="ALWAYS" />
+</children>
+</VBox>
+</children>
+</VBox><Button fx:id="loadImageButton" layoutX="895.0" layoutY="15.0" mnemonicParsing="false" onAction="#loadImageforMesh" prefHeight="25.0" prefWidth="202.0" text="Load Image" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="14.0" />
+</children></fx:root>
