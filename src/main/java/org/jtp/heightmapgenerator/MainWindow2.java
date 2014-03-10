@@ -13,6 +13,7 @@ package org.jtp.heightmapgenerator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -20,7 +21,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -217,7 +217,18 @@ public class MainWindow2 extends AnchorPane implements Initializable {
     }
 
     @FXML
-    private void exportAsFXML(ActionEvent event) {
+    private void exportAsFXML(ActionEvent event) throws FileNotFoundException {
+        if(meshView.getMesh() != null){
+            fileChooser.getExtensionFilters().clear();
+            fileChooser.getExtensionFilters().add(fxmlFilter);
+            File file = fileChooser.showSaveDialog(this.getScene().getWindow());
+            if(file != null){
+                FXMLExporter exp = new FXMLExporter(new FileOutputStream(file));
+                exp.export(meshView);
+                
+                progressLabel.setText("Export Successful !");
+            }
+        }
     }
 
     @FXML
