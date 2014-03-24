@@ -19,19 +19,11 @@
 
 package org.jtp.heightmapgenerator;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.geometry.Point3D;
 import javafx.scene.Group;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
-import javafx.scene.transform.Rotate;
 import org.jtp.heightmapgenerator.utils.Vertex;
 
 /**
@@ -48,36 +40,50 @@ public class MeshUtils {
     private final static int TEXCOORD_SIZE = 2;
     private final static int FACE_SIZE = 6;
 
-    public static ListView<Point3D> getPointsListView(MeshView meshView) {
-        ListView<Point3D> view = new ListView<>();
-        ObservableList<Point3D> points = FXCollections.observableArrayList();
-        if (meshView.getMesh() != null) {
-            for (int i = 0; i < ((TriangleMesh) meshView.getMesh()).getPoints().size() - 4; i++) {
-                float x, y, z;
-                x = ((TriangleMesh) meshView.getMesh()).getPoints().get(i);
-                y = ((TriangleMesh) meshView.getMesh()).getPoints().get(i + 1);
-                z = ((TriangleMesh) meshView.getMesh()).getPoints().get(i + 2);
-
-                points.add(new Point3D((double) x, (double) y, (double) z));
-
-                i += 2;// increment to next X
-            }
-            view.setItems(points);
-
-            view.selectionModelProperty().addListener(new ChangeListener<MultipleSelectionModel<Point3D>>() {
-                @Override
-                public void changed(ObservableValue<? extends MultipleSelectionModel<Point3D>> ov, MultipleSelectionModel<Point3D> t, MultipleSelectionModel<Point3D> t1) {
-                    if (t1.isSelected(t1.getSelectedIndex())) {
-
-                    }
+    public static Group createCapsule(float radius, float height){
+        Group root = new Group();
+        final int sphereDivisions = correctDivisions(64);
+        int halfDivisions = sphereDivisions / 2;
+        int numPoints = sphereDivisions * (halfDivisions - 1) + 2;
+        int numTexCoords = (sphereDivisions + 1) * (halfDivisions - 1) + sphereDivisions * 2;
+        int numFaces = sphereDivisions * (halfDivisions - 2) * 2 + sphereDivisions * 2;
+        float hdTheta,tdTheta, x,y,z;
+        float fDivisions = 1.0F / sphereDivisions;
+        
+        float[] points = new float[numPoints * POINT_SIZE],
+                texCoords = new float[numTexCoords * TEXCOORD_SIZE];
+        int[] faces = new int[numFaces * FACE_SIZE];
+        
+        //loop for 1/2 sphere
+        for(int i= 0; i < halfDivisions; i++){
+            hdTheta = (float)fDivisions * (i + 1 - halfDivisions / 2) * 2.0F * 3.141593F;
+            float hdX = (float)Math.cos(hdTheta), 
+                  hdY = (float)Math.sin(hdTheta);
+            
+            for(int j = 0; j < halfDivisions; j++){
+                tdTheta = fDivisions * j * 2.0F * 3.141593F;
+                x = (float)Math.sin(tdTheta) * hdY * radius;
+                y = (float)Math.cos(tdTheta) * hdY * radius;
+                z = hdX * radius;
+                if(j != 0){
+                    root.getChildren().add(new Vertex(x,y,z));
+                }else{
+                    root.getChildren().add(new Vertex(x,y,z, Color.BLUE));
                 }
-            });
-            System.out.println(((TriangleMesh) meshView.getMesh()).getPoints().size() / POINT_SIZE + " :: " + points.size());
-
-            return view;
-        } else {
-            return null;
+            }
+                
+            
         }
+        
+        TriangleMesh mesh = new TriangleMesh();
+        mesh.getPoints().addAll(points);
+        mesh.getTexCoords().addAll(texCoords);
+        mesh.getFaces().addAll(faces);
+        
+        MeshView mv = new MeshView(mesh);
+        
+        root.getChildren().add(mv);
+        return root;
     }
 
     public static TriangleMesh createHeightMap(Image image, int pskip, float maxH, float scale) {
@@ -336,99 +342,94 @@ public class MeshUtils {
      depending on the relative sizes of a and c. c>a corresponds to the ring torus (shown above), 
      c=a corresponds to a horn torus which is tangent to itself at the point (0, 0, 0), 
      and c<a corresponds to a self-intersecting spindle torus (Pinkall 1986). 
-    */
-    public static Group createToroidMesh(float lRadius,float sRadius, int divisions) {
+     */
+    public static TriangleMesh createToroidMesh(float radius, float tRadius, int tubeDivisions, int radiusDivisions) {
         final Group root = new Group();
-        float[] points = new float[(divisions * divisions) * POINT_SIZE],
-                texCoords = new float[(divisions * divisions) * TEXCOORD_SIZE];
-        int[] faces = new int[(divisions * divisions) * FACE_SIZE];
-        
+        int numVerts = tubeDivisions * radiusDivisions;
+        int faceCount = numVerts * 2;
+        float[] points = new float[numVerts * POINT_SIZE],
+                texCoords = new float[numVerts * TEXCOORD_SIZE];
+        int[] faces = new int[faceCount * FACE_SIZE],
+              smoothingGroups;
+
         int pointIndex = 0, texIndex = 0, faceIndex = 0, smoothIndex = 0;
-        float divFrac = 1.0f / divisions;
-        float radian, x, y, z;
-        float f1 = 0.0039063F;
-        
+        float tubeFraction = 1.0f / tubeDivisions;
+        float radiusFraction = 1.0f / radiusDivisions;
+        float x, y, z;
+
+        int p0 = 0, p1 = 0, p2 = 0, p3 = 0, t0 = 0, t1 = 0, t2 = 0, t3 = 0;
+
         // create points
-        for(int vertIndex = 0; vertIndex < divisions; vertIndex++){
-            // individual vertex
-            radian = divFrac * vertIndex * 2.0f * 3.141592653589793f;
-            
-            for(int crossSectionIndex = 0; crossSectionIndex < divisions; crossSectionIndex++){
-                // cross section vertices
-                float localRadian = divFrac * crossSectionIndex * 2.0f * 3.141592653589793f;
+        for (int tubeIndex = 0; tubeIndex < tubeDivisions; tubeIndex++) {
+
+            float radian = tubeFraction * tubeIndex * 2.0f * 3.141592653589793f;
+
+            for (int radiusIndex = 0; radiusIndex < radiusDivisions; radiusIndex++) {
+
+                float localRadian = radiusFraction * radiusIndex * 2.0f * 3.141592653589793f;
+
+                points[pointIndex]     = x = (radius + tRadius * ((float) Math.cos(radian))) * ((float) Math.cos(localRadian));
+                points[pointIndex + 1] = y = (radius + tRadius * ((float) Math.cos(radian))) * ((float) Math.sin(localRadian));
+                points[pointIndex + 2] = z = (tRadius * (float) Math.sin(radian));
+
+                pointIndex += 3;
+
+                float r = radiusIndex < tubeDivisions ? tubeFraction * radiusIndex * 2.0F * 3.141592653589793f : 0.0f;
+                texCoords[texIndex] = (0.5F + (float) (Math.sin(r) * 0.5D));;
+                texCoords[texIndex + 1] = ((float) (Math.cos(r) * 0.5D) + 0.5F);
+
+                texIndex += 2;
                 
-                points[pointIndex] =     x = (lRadius + sRadius * ((float)Math.cos(radian))) * ((float)Math.cos(localRadian));
-                points[pointIndex + 1] = y = (lRadius + sRadius * ((float)Math.cos(radian))) * ((float)Math.sin(localRadian));
-                points[pointIndex + 2] = z = (sRadius * (float)Math.sin(radian));
+            }
+
+        }
+        //create faces        
+        for (int point = 0; point < (tubeDivisions) ; point++) {
+            for (int crossSection = 0; crossSection < (radiusDivisions) ; crossSection++) {
+                p0 = point * radiusDivisions + crossSection;
+                p1 = p0 >= 0 ? p0 + 1 : p0 - (radiusDivisions);
+                    p1 = p1 % (radiusDivisions) != 0 ? p0 + 1 : p0 - (radiusDivisions - 1);
+                p2 = (p0 + radiusDivisions) < ((tubeDivisions * radiusDivisions)) ? p0 + radiusDivisions : p0 - (tubeDivisions * radiusDivisions) + radiusDivisions ;
+                p3 = p2 < ((tubeDivisions * radiusDivisions) - 1) ? p2 + 1 : p2 - (tubeDivisions * radiusDivisions) + 1;
+                    p3 = p3 % (radiusDivisions) != 0 ? p2 + 1 : p2 - (radiusDivisions - 1); 
                                 
-                pointIndex += 2;
-                
-                /**
-             * points:
-             * 1      3
-             *  -------   texture:
-             *  |\    |  1,1    1,0
-             *  | \   |    -------
-             *  |  \  |    |     |
-             *  |   \ |    |     |
-             *  |    \|    -------
-             *  -------  0,1    0,0
-             * 0      2
-             *
-             * texture[3] 0,0 maps to vertex 2
-             * texture[2] 0,1 maps to vertex 0
-             * texture[0] 1,1 maps to vertex 1
-             * texture[1] 1,0 maps to vertex 3
-             *
-             * Two triangles define rectangular faces:
-             * p0, t0, p1, t1, p2, t2 // First triangle of a textured rectangle
-             * p0, t0, p2, t2, p3, t3 // Second triangle of a textured rectangle
-             */
-                if(vertIndex == 0 && crossSectionIndex == 0){
-                    root.getChildren().add(new Vertex(x, y, z, Color.DARKBLUE)); //tc 0,1
-                }else if(vertIndex == 0 && crossSectionIndex == 1){        
-                    root.getChildren().add(new Vertex(x, y, z, Color.DARKGREEN));//tc 0,0
-                }else if(vertIndex == 1 && crossSectionIndex == 0){        
-                    root.getChildren().add(new Vertex(x, y, z, Color.DARKCYAN)); //tc 1,1
-                }else if(vertIndex == 1 && crossSectionIndex == 1){        
-                    root.getChildren().add(new Vertex(x, y, z, Color.DARKVIOLET));//tc 1,0
-                }else{
-                    root.getChildren().add(new Vertex(x, y, z));
+                t0 = point * (radiusDivisions) + crossSection;
+                t1 = t0 >= 0 ? t0 + 1 : t0 - (radiusDivisions);
+                    t1 = t1 % (radiusDivisions) != 0 ? t0 + 1 : t0 - (radiusDivisions - 1);
+                t2 = (t0 + radiusDivisions) < ((tubeDivisions * radiusDivisions)) ? t0 + radiusDivisions : t0 - (tubeDivisions * radiusDivisions) + radiusDivisions ;
+                t3 = t2 < ((tubeDivisions * radiusDivisions) - 1) ? t2 + 1 : t2 - (tubeDivisions * radiusDivisions) + 1;
+                    t3 = t3 % (radiusDivisions) != 0 ? t2 + 1 : t2 - (radiusDivisions - 1);
+             
+                try {
+                    faces[faceIndex]     = (p2);
+                    faces[faceIndex + 1] = (t3);
+                    faces[faceIndex + 2] = (p0);
+                    faces[faceIndex + 3] = (t2);
+                    faces[faceIndex + 4] = (p1);
+                    faces[faceIndex + 5] = (t0);
+
+                    faceIndex += FACE_SIZE;
+
+                    faces[faceIndex]     = (p2);
+                    faces[faceIndex + 1] = (t3);
+                    faces[faceIndex + 2] = (p1);
+                    faces[faceIndex + 3] = (t0);
+                    faces[faceIndex + 4] = (p3);
+                    faces[faceIndex + 5] = (t1);
+                    faceIndex += FACE_SIZE;
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                //root.getChildren().add(new Vertex(x, y, z));
-                //System.out.println("x: "+x+", y: "+y+", z: "+z);  
             }
         }
         
-        
-       /* double s, t, x, y, z, twopi = 2 * Math.PI;
-        for (int i = 0; i < numc; i++) {
-            for (int j = 0; j <= numt; j++) {
-                for (int k = 1; k >= 0; k--) {
-                    s = (i + k) % numc + 0.5;
-                    t = j % numt;
-                    x = (1 + 0.1 * Math.cos(s * twopi / numc))
-                            * Math.cos(t * twopi / numt);
-                    y = (1 + 0.1 * Math.cos(s * twopi / numc))
-                            * Math.sin(t * twopi / numt);
-                    z = 0.1 * Math.sin(s * twopi / numc);
-                    root.getChildren().add(new Vertex(x, y, z));
-                    System.out.println("x: "+x+", y: "+y+", z: "+z);
-                }// k
-            }// j
-        }// i
-        */
-        
-        
-        /*TriangleMesh localTriangleMesh = new TriangleMesh();
-         localTriangleMesh.getPoints().setAll(points);
-         localTriangleMesh.getTexCoords().setAll(texCoords);
-         localTriangleMesh.getFaces().setAll(faces);
+        TriangleMesh localTriangleMesh = new TriangleMesh();
+        localTriangleMesh.getPoints().setAll(points);
+        localTriangleMesh.getTexCoords().setAll(texCoords);
+        localTriangleMesh.getFaces().setAll(faces);
 
-         return localTriangleMesh;*/
-        root.setRotationAxis(Rotate.X_AXIS);
-        root.setRotate(90);
-        return root;
+        
+        return localTriangleMesh;
     }
 
     static TriangleMesh createCylindricalMesh(int divisions, float height, float radius) {
